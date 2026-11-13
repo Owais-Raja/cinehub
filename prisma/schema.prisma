@@ -1,0 +1,350 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  CUSTOMER
+  STAFF
+  ADMIN
+}
+
+enum SeatCategory {
+  SILVER
+  GOLD
+  PLATINUM
+  RECLINER
+}
+
+enum MovieStatus {
+  NOW_SHOWING
+  COMING_SOON
+  ARCHIVED
+}
+
+enum Certification {
+  U
+  UA
+  A
+  S
+}
+
+enum ShowStatus {
+  SCHEDULED
+  RUNNING
+  COMPLETED
+  CANCELLED
+}
+
+enum HoldStatus {
+  ACTIVE
+  EXPIRED
+  RELEASED
+  CONVERTED
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  UPI
+  CARD
+  NETBANKING
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
+enum TicketStatus {
+  ISSUED
+  USED
+  CANCELLED
+}
+
+enum ValidationResult {
+  VALID
+  ALREADY_USED
+  INVALID
+  CANCELLED
+}
+
+model User {
+  id               String             @id @default(uuid())
+  email            String             @unique
+  passwordHash     String
+  fullName         String
+  phone            String?
+  role             Role               @default(CUSTOMER)
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  seatHolds        SeatHold[]
+  bookings         Booking[]
+  validationsDone  TicketValidation[]
+  auditLogs        AuditLog[]
+}
+
+model City {
+  id        String    @id @default(uuid())
+  name      String    @unique
+  state     String
+  slug      String    @unique
+  isActive  Boolean   @default(true)
+  theatres  Theatre[]
+}
+
+model Theatre {
+  id        String   @id @default(uuid())
+  cityId    String
+  city      City     @relation(fields: [cityId], references: [id], onDelete: Restrict)
+  name      String
+  address   String
+  isActive  Boolean  @default(true)
+  screens   Screen[]
+
+  @@index([cityId])
+}
+
+model Screen {
+  id         String   @id @default(uuid())
+  theatreId  String
+  theatre    Theatre  @relation(fields: [theatreId], references: [id], onDelete: Cascade)
+  name       String
+  screenType String   @default("STANDARD")
+  totalSeats Int
+  isActive   Boolean  @default(true)
+  seats      Seat[]
+  shows      Show[]
+
+  @@index([theatreId])
+}
+
+model Seat {
+  id           String        @id @default(uuid())
+  screenId     String
+  screen       Screen        @relation(fields: [screenId], references: [id], onDelete: Cascade)
+  row          String
+  number       Int
+  category     SeatCategory  @default(SILVER)
+  isActive     Boolean       @default(true)
+
+  seatHolds    SeatHold[]
+  bookingSeats BookingSeat[]
+
+  @@unique([screenId, row, number])
+  @@index([screenId])
+}
+
+model Genre {
+  id     String       @id @default(uuid())
+  name   String       @unique
+  slug   String       @unique
+  movies MovieGenre[]
+}
+
+model Movie {
+  id            String        @id @default(uuid())
+  title         String
+  slug          String        @unique
+  synopsis      String        @db.Text
+  posterUrl     String
+  bannerUrl     String?
+  trailerUrl    String?
+  durationMins  Int
+  certification Certification @default(UA)
+  releaseDate   DateTime
+  status        MovieStatus   @default(NOW_SHOWING)
+  createdAt     DateTime      @default(now())
+
+  genres        MovieGenre[]
+  shows         Show[]
+}
+
+model MovieGenre {
+  movieId String
+  genreId String
+  movie   Movie  @relation(fields: [movieId], references: [id], onDelete: Cascade)
+  genre   Genre  @relation(fields: [genreId], references: [id], onDelete: Cascade)
+
+  @@id([movieId, genreId])
+}
+
+model Language {
+  id    String @id @default(uuid())
+  name  String @unique
+  code  String @unique
+  shows Show[]
+}
+
+model Format {
+  id    String @id @default(uuid())
+  name  String @unique
+  slug  String @unique
+  shows Show[]
+}
+
+model Show {
+  id           String          @id @default(uuid())
+  movieId      String
+  movie        Movie           @relation(fields: [movieId], references: [id], onDelete: Restrict)
+  screenId     String
+  screen       Screen          @relation(fields: [screenId], references: [id], onDelete: Restrict)
+  languageId   String
+  language     Language        @relation(fields: [languageId], references: [id], onDelete: Restrict)
+  formatId     String
+  format       Format          @relation(fields: [formatId], references: [id], onDelete: Restrict)
+  startTime    DateTime
+  endTime      DateTime
+  basePrice    Decimal         @db.Decimal(10, 2)
+  status       ShowStatus      @default(SCHEDULED)
+  createdAt    DateTime        @default(now())
+
+  prices       ShowSeatPrice[]
+  seatHolds    SeatHold[]
+  bookings     Booking[]
+  bookingSeats BookingSeat[]
+
+  @@index([movieId, screenId, startTime])
+  @@index([startTime])
+}
+
+model ShowSeatPrice {
+  id       String       @id @default(uuid())
+  showId   String
+  show     Show         @relation(fields: [showId], references: [id], onDelete: Cascade)
+  category SeatCategory
+  price    Decimal      @db.Decimal(10, 2)
+
+  @@unique([showId, category])
+}
+
+model SeatHold {
+  id           String     @id @default(uuid())
+  showId       String
+  show         Show       @relation(fields: [showId], references: [id], onDelete: Cascade)
+  seatId       String
+  seat         Seat       @relation(fields: [seatId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessionToken String
+  status       HoldStatus @default(ACTIVE)
+  expiresAt    DateTime
+  createdAt    DateTime   @default(now())
+
+  @@index([showId, seatId, status, expiresAt])
+  @@index([userId])
+}
+
+model Booking {
+  id               String        @id @default(uuid())
+  bookingReference String        @unique
+  userId           String
+  user             User          @relation(fields: [userId], references: [id], onDelete: Restrict)
+  showId           String
+  show             Show          @relation(fields: [showId], references: [id], onDelete: Restrict)
+  status           BookingStatus @default(PENDING)
+  subtotal         Decimal       @db.Decimal(10, 2)
+  convenienceFee   Decimal       @db.Decimal(10, 2)
+  taxAmount        Decimal       @db.Decimal(10, 2)
+  totalAmount      Decimal       @db.Decimal(10, 2)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  bookingSeats     BookingSeat[]
+  payment          Payment?
+  refund           Refund?
+  ticket           Ticket?
+
+  @@index([userId])
+  @@index([showId])
+}
+
+model BookingSeat {
+  id        String       @id @default(uuid())
+  bookingId String
+  booking   Booking      @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  showId    String
+  show      Show         @relation(fields: [showId], references: [id], onDelete: Restrict)
+  seatId    String
+  seat      Seat         @relation(fields: [seatId], references: [id], onDelete: Restrict)
+  price     Decimal      @db.Decimal(10, 2)
+  category  SeatCategory
+
+  @@unique([showId, seatId])
+  @@index([bookingId])
+}
+
+model Payment {
+  id               String        @id @default(uuid())
+  paymentReference String        @unique
+  bookingId        String        @unique
+  booking          Booking       @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  amount           Decimal       @db.Decimal(10, 2)
+  method           PaymentMethod
+  status           PaymentStatus @default(PENDING)
+  idempotencyKey   String        @unique
+  createdAt        DateTime      @default(now())
+}
+
+model Refund {
+  id        String   @id @default(uuid())
+  bookingId String   @unique
+  booking   Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  amount    Decimal  @db.Decimal(10, 2)
+  reason    String
+  status    String   @default("COMPLETED")
+  createdAt DateTime @default(now())
+}
+
+model Ticket {
+  id              String             @id @default(uuid())
+  ticketReference String             @unique
+  bookingId       String             @unique
+  booking         Booking            @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  validationToken String             @unique
+  qrCodeData      String             @db.Text
+  status          TicketStatus       @default(ISSUED)
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  validations     TicketValidation[]
+}
+
+model TicketValidation {
+  id          String           @id @default(uuid())
+  ticketId    String
+  ticket      Ticket           @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  staffId     String
+  staff       User             @relation(fields: [staffId], references: [id], onDelete: Restrict)
+  validatedAt DateTime         @default(now())
+  result      ValidationResult
+  notes       String?
+
+  @@index([ticketId])
+  @@index([staffId])
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action     String
+  entityType String
+  entityId   String
+  metadata   Json?
+  ipAddress  String?
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([userId])
+}
