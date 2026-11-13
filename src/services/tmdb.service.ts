@@ -108,6 +108,60 @@ export class TmdbService {
   }
 
   /**
+   * Fetches upcoming movies releasing in Indian cinema halls
+   */
+  public static async getUpcoming(page = 1, region = "IN"): Promise<{
+    movies: TmdbMovieSummary[];
+    totalPages: number;
+    totalResults: number;
+  }> {
+    try {
+      const data = await this.request<{
+        page: number;
+        total_pages: number;
+        total_results: number;
+        results: Array<{
+          id: number;
+          title: string;
+          original_title: string;
+          overview: string;
+          poster_path: string | null;
+          backdrop_path: string | null;
+          release_date: string;
+          vote_average: number;
+          vote_count: number;
+          popularity: number;
+        }>;
+      }>("/movie/upcoming", {
+        region,
+        page: String(page),
+      });
+
+      const movies = data.results.map((m) => ({
+        id: m.id,
+        title: m.title,
+        originalTitle: m.original_title,
+        overview: m.overview,
+        posterUrl: m.poster_path ? `${TMDB_IMAGE_BASE_POSTER}${m.poster_path}` : null,
+        backdropUrl: m.backdrop_path ? `${TMDB_IMAGE_BASE_BACKDROP}${m.backdrop_path}` : null,
+        releaseDate: m.release_date,
+        voteAverage: Math.round(m.vote_average * 10) / 10,
+        voteCount: m.vote_count,
+        popularity: m.popularity,
+      }));
+
+      return {
+        movies,
+        totalPages: data.total_pages,
+        totalResults: data.total_results,
+      };
+    } catch (error) {
+      console.error("[TmdbService.getUpcoming] Error:", error);
+      return { movies: [], totalPages: 0, totalResults: 0 };
+    }
+  }
+
+  /**
    * Searches TMDb by title
    */
   public static async searchMovies(query: string, page = 1): Promise<{

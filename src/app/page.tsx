@@ -7,10 +7,14 @@ import { Film, Sparkles, ShieldCheck, Clock, Ticket, Star, Radio } from "lucide-
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const [{ movies: nowShowing }, tmdbData] = await Promise.all([
+  const [{ movies: nowShowing }, { movies: comingSoon }, tmdbData] = await Promise.all([
     MovieService.getMovies({
       status: "NOW_SHOWING",
       limit: 8,
+    }),
+    MovieService.getMovies({
+      status: "COMING_SOON",
+      limit: 4,
     }),
     TmdbService.getNowPlaying(1, "IN").catch(() => ({ movies: [] })),
   ]);
@@ -141,6 +145,36 @@ export default async function HomePage() {
           </div>
         )}
       </section>
+
+      {/* Coming Soon Section */}
+      {comingSoon.length > 0 && (
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-xl sm:text-2xl font-bold text-white flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-[#E8B86D]" />
+                <span>Coming Soon to Cinemas</span>
+              </h2>
+              <p className="text-xs text-[#8E9AA8] mt-1">
+                Anticipated Indian and global blockbusters releasing soon
+              </p>
+            </div>
+
+            <Link
+              href="/movies?status=COMING_SOON"
+              className="text-xs font-semibold text-[#E8B86D] hover:underline"
+            >
+              Explore Upcoming →
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-4 sm:gap-6">
+            {comingSoon.map((movie) => (
+              <MovieCard key={movie.id} {...movie} />
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Real-Time Indian Cinema Feed (TMDb) */}
       {tmdbTrending.length > 0 && (

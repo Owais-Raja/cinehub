@@ -49,14 +49,53 @@ export default async function MoviesPage({
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Header & Filter Controls */}
       <div className="flex flex-col gap-4 mb-8">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-black text-white flex items-center gap-2">
-            <Film className="w-6 h-6 text-[#E83B50]" />
-            <span>Discover Movies</span>
-          </h1>
-          <p className="text-xs text-[#8E9AA8] mt-1">
-            Browse and book currently showing releases in your city
-          </p>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-black text-white flex items-center gap-2">
+              <Film className="w-6 h-6 text-[#E83B50]" />
+              <span>{status === "COMING_SOON" ? "Upcoming Movies" : "Movies In Cinemas"}</span>
+            </h1>
+            <p className="text-xs text-[#8E9AA8] mt-1">
+              {status === "COMING_SOON"
+                ? "Anticipated upcoming Indian & international blockbusters coming soon to theaters"
+                : "Browse real-time releases currently screening across top Indian multiplexes"}
+            </p>
+          </div>
+
+          {/* BookMyShow Style Status Toggle Tabs */}
+          <div className="flex items-center gap-1 bg-[#212836] p-1 rounded-xl border border-[#2D3748] self-start sm:self-auto">
+            <Link
+              href={`/movies?${new URLSearchParams({
+                ...(search ? { search } : {}),
+                ...(genre ? { genre } : {}),
+                ...(language ? { language } : {}),
+                status: "NOW_SHOWING",
+              }).toString()}`}
+              className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${
+                status !== "COMING_SOON"
+                  ? "bg-[#E83B50] text-white shadow-md shadow-[#E83B50]/20"
+                  : "text-[#8E9AA8] hover:text-white"
+              }`}
+            >
+              In Cinemas
+            </Link>
+
+            <Link
+              href={`/movies?${new URLSearchParams({
+                ...(search ? { search } : {}),
+                ...(genre ? { genre } : {}),
+                ...(language ? { language } : {}),
+                status: "COMING_SOON",
+              }).toString()}`}
+              className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${
+                status === "COMING_SOON"
+                  ? "bg-[#E8B86D] text-[#171923] shadow-md shadow-[#E8B86D]/20"
+                  : "text-[#8E9AA8] hover:text-white"
+              }`}
+            >
+              Coming Soon
+            </Link>
+          </div>
         </div>
 
         {/* Filter Pills */}
