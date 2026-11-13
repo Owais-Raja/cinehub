@@ -1,7 +1,8 @@
 import { MovieService } from "@/services/movie.service";
 import { formatDuration } from "@/lib/utils";
-import { Film, Plus, Edit } from "lucide-react";
+import { Film } from "lucide-react";
 import Link from "next/link";
+import { TmdbImportModal } from "@/components/admin/TmdbImportModal";
 
 export const dynamic = "force-dynamic";
 
@@ -20,6 +21,8 @@ export default async function AdminMoviesPage() {
             Configure titles, certifications, genres, poster assets, and screening statuses
           </p>
         </div>
+
+        <TmdbImportModal />
       </div>
 
       <div className="bg-[#212836] rounded-2xl border border-[#2D3748] overflow-hidden shadow-xl">

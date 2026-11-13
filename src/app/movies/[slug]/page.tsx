@@ -1,9 +1,10 @@
 import { MovieService } from "@/services/movie.service";
 import { ShowService } from "@/services/show.service";
+import { TmdbService } from "@/services/tmdb.service";
 import { formatDuration, formatINR, formatTime } from "@/lib/utils";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Film, Calendar, Clock, MapPin, Play, Ticket } from "lucide-react";
+import { Film, Calendar, Clock, MapPin, Play, Ticket, Star } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -48,6 +49,23 @@ export default async function MovieDetailsPage({
 
   const currentDateString = selectedDate.toISOString().split("T")[0];
 
+  // Live TMDb Metadata Enrichment (Trailers & Ratings)
+  let tmdbData: { rating: number; voteCount: number; trailerUrl: string | null } | null = null;
+  try {
+    const tmdbSearch = await TmdbService.searchMovies(movie.title);
+    if (tmdbSearch.movies.length > 0) {
+      const topMatch = tmdbSearch.movies[0];
+      const trailerKey = await TmdbService.getTrailerKey(topMatch.id);
+      tmdbData = {
+        rating: topMatch.voteAverage,
+        voteCount: topMatch.voteCount,
+        trailerUrl: trailerKey ? `https://www.youtube.com/watch?v=${trailerKey}` : null,
+      };
+    }
+  } catch {
+    // Graceful fallback if offline
+  }
+
   return (
     <div className="flex flex-col gap-8 pb-16">
       {/* Movie Hero Banner */}
@@ -86,6 +104,15 @@ export default async function MovieDetailsPage({
                 <span className="text-xs text-[#8E9AA8]">
                   {movie.genres.map((g) => g.genre.name).join(", ")}
                 </span>
+                {tmdbData?.rating && (
+                  <>
+                    <span className="text-xs text-[#8E9AA8]">•</span>
+                    <span className="px-2 py-0.5 rounded bg-[#E8B86D]/20 text-[#E8B86D] text-[11px] font-bold flex items-center gap-1 border border-[#E8B86D]/30">
+                      <Star className="w-3 h-3 fill-[#E8B86D]" />
+                      <span>{tmdbData.rating}/10 TMDb</span>
+                    </span>
+                  </>
+                )}
               </div>
 
               <h1 className="text-2xl sm:text-4xl font-black text-white tracking-tight mb-2">
@@ -96,17 +123,19 @@ export default async function MovieDetailsPage({
                 {movie.synopsis}
               </p>
 
-              {movie.trailerUrl && (
-                <a
-                  href={movie.trailerUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#242B3A]/90 hover:bg-[#242B3A] text-xs font-semibold text-[#E8B86D] border border-[#E8B86D]/30 transition-colors"
-                >
-                  <Play className="w-3.5 h-3.5 fill-[#E8B86D]" />
-                  <span>Watch Trailer</span>
-                </a>
-              )}
+              <div className="flex items-center gap-3">
+                {(tmdbData?.trailerUrl || movie.trailerUrl) && (
+                  <a
+                    href={tmdbData?.trailerUrl || movie.trailerUrl || "#"}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#E83B50] hover:bg-[#D32F43] text-xs font-bold text-white shadow-lg shadow-[#E83B50]/20 transition-all"
+                  >
+                    <Play className="w-3.5 h-3.5 fill-white" />
+                    <span>Watch Official Trailer</span>
+                  </a>
+                )}
+              </div>
             </div>
           </div>
         </div>
