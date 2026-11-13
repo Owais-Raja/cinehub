@@ -2,6 +2,7 @@ import prisma from "@/lib/prisma";
 import { NotFoundError } from "@/lib/rbac";
 import { AuditService } from "./audit.service";
 import { MovieStatus, Certification } from "@prisma/client";
+import { slugify } from "@/lib/utils";
 
 export class MovieService {
   static async getMovies({
@@ -124,7 +125,7 @@ export class MovieService {
     adminUserId,
   }: {
     title: string;
-    slug: string;
+    slug?: string;
     synopsis: string;
     posterUrl: string;
     bannerUrl?: string;
@@ -136,13 +137,21 @@ export class MovieService {
     genreIds?: string[];
     adminUserId?: string;
   }) {
+    const baseSlug = slug || slugify(title);
+    let finalSlug = baseSlug;
+    let counter = 1;
+    while (await prisma.movie.findUnique({ where: { slug: finalSlug } })) {
+      finalSlug = `${baseSlug}-${counter}`;
+      counter++;
+    }
+
     const movie = await prisma.movie.create({
       data: {
         title,
-        slug,
+        slug: finalSlug,
         synopsis,
         posterUrl,
-        bannerUrl,
+        bannerUrl: bannerUrl || posterUrl,
         trailerUrl,
         durationMins,
         certification,
@@ -195,6 +204,32 @@ export class MovieService {
     });
 
     return movie;
+  }
+
+  static async deleteMovie(id: string, adminUserId?: string) {
+    const movie = await prisma.movie.findUnique({
+      where: { id },
+      select: { title: true, slug: true },
+    });
+
+    if (!movie) {
+      throw new NotFoundError("Movie not found");
+    }
+
+    // Delete associated shows and genre relations
+    await prisma.show.deleteMany({ where: { movieId: id } });
+    await prisma.movieGenre.deleteMany({ where: { movieId: id } });
+    await prisma.movie.delete({ where: { id } });
+
+    await AuditService.log({
+      userId: adminUserId,
+      action: "MOVIE_DELETED",
+      entityType: "Movie",
+      entityId: id,
+      metadata: { title: movie.title, slug: movie.slug },
+    });
+
+    return { success: true, message: `Movie "${movie.title}" deleted.` };
   }
 }
 

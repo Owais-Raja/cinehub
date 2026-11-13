@@ -38,3 +38,21 @@ export async function PUT(
   }
 }
 
+export async function DELETE(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const user = await requireRole([Role.ADMIN]);
+    const { id } = await params;
+
+    const result = await MovieService.deleteMovie(id, user.id);
+    return NextResponse.json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    return handleApiError(error);
+  }
+}
+

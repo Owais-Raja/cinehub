@@ -125,7 +125,7 @@ export function TmdbImportModal() {
                     type="text"
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
-                    placeholder="Search any title (e.g., Pushpa 2, Dune, Stree 2, Kalki)..."
+                    placeholder="Search any title (e.g., Pushpa 2, Dune 3, Doomsday, King)..."
                     className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-[#212836] border border-[#2D3748] text-white text-xs placeholder:text-[#8E9AA8] focus:outline-none focus:border-[#E83B50]"
                   />
                 </div>
