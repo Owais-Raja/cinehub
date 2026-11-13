@@ -96,7 +96,7 @@ export class BookingService {
     const taxAmount = Math.round(taxableAmount * GST_RATE * 100) / 100;
     const totalAmount = Math.round((taxableAmount + taxAmount) * 100) / 100;
 
-    // 4. Create pending booking record
+    // 4. Create pending booking record with reserved BookingSeat rows
     const bookingReference = this.generateBookingReference();
 
     const booking = await prisma.booking.create({
@@ -109,6 +109,21 @@ export class BookingService {
         convenienceFee,
         taxAmount,
         totalAmount,
+        bookingSeats: {
+          create: seatIds.map((seatId) => {
+            const seat = show.screen.seats.find((s) => s.id === seatId);
+            const category = seat?.category || "SILVER";
+            return {
+              showId,
+              seatId,
+              price: pricingMap[category] || basePrice,
+              category,
+            };
+          }),
+        },
+      },
+      include: {
+        bookingSeats: true,
       },
     });
 
@@ -287,3 +302,4 @@ export class BookingService {
     return booking;
   }
 }
+

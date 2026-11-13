@@ -67,3 +67,4 @@ export const authOptions: NextAuthOptions = {
   },
   secret: process.env.NEXTAUTH_SECRET || "cinehub-fallback-development-secret-key-32chars",
 };
+

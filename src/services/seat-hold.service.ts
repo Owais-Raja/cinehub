@@ -2,7 +2,7 @@ import prisma from "@/lib/prisma";
 import { ConflictError, NotFoundError } from "@/lib/rbac";
 import { SEAT_HOLD_DURATION_MINUTES } from "@/lib/constants";
 import { AuditService } from "./audit.service";
-import { HoldStatus } from "@prisma/client";
+import { HoldStatus, Prisma } from "@prisma/client";
 
 export interface SeatAvailabilityDto {
   id: string;
@@ -71,123 +71,145 @@ export class SeatHoldService {
     }
 
     // 2. Execute within an ACID Prisma transaction with pessimistic lock logic
-    return await prisma.$transaction(
-      async (tx) => {
-        const now = new Date();
+    try {
+      return await prisma.$transaction(
+        async (tx) => {
+          // Step 0: Acquire pessimistic row lock on the requested physical seats
+          await tx.$queryRaw`SELECT id FROM "Seat" WHERE id IN (${Prisma.join(seatIds)}) FOR UPDATE`;
 
-        // Step A: Expire stale holds in real-time
-        await tx.seatHold.updateMany({
-          where: {
-            showId,
-            seatId: { in: seatIds },
-            status: HoldStatus.ACTIVE,
-            expiresAt: { lte: now },
-          },
-          data: {
-            status: HoldStatus.EXPIRED,
-          },
-        });
+          const now = new Date();
 
-        // Step B: Check if any requested seat is already CONFIRMED booked
-        const confirmedBooking = await tx.bookingSeat.findFirst({
-          where: {
-            showId,
-            seatId: { in: seatIds },
-            booking: { status: "CONFIRMED" },
-          },
-          include: { seat: true },
-        });
-
-        if (confirmedBooking) {
-          throw new ConflictError(
-            `Seat Row ${confirmedBooking.seat.row} Number ${confirmedBooking.seat.number} is already booked.`,
-            { conflictingSeatId: confirmedBooking.seatId }
-          );
-        }
-
-        // Step C: Check if any seat is currently HELD by a different user with active TTL
-        const activeHoldConflict = await tx.seatHold.findFirst({
-          where: {
-            showId,
-            seatId: { in: seatIds },
-            status: HoldStatus.ACTIVE,
-            expiresAt: { gt: now },
-            userId: { not: userId },
-          },
-          include: { seat: true },
-        });
-
-        if (activeHoldConflict) {
-          throw new ConflictError(
-            `Seat Row ${activeHoldConflict.seat.row} Number ${activeHoldConflict.seat.number} is currently held by another user.`,
-            {
-              conflictingSeatId: activeHoldConflict.seatId,
-              heldUntil: activeHoldConflict.expiresAt.toISOString(),
-            }
-          );
-        }
-
-        // Step D: Calculate new expiration timestamp (10 minutes lease)
-        const expiresAt = new Date(now.getTime() + SEAT_HOLD_DURATION_MINUTES * 60 * 1000);
-
-        // Step E: Release previous active holds by this user for other seats in this show
-        await tx.seatHold.updateMany({
-          where: {
-            showId,
-            userId,
-            status: HoldStatus.ACTIVE,
-            seatId: { notIn: seatIds },
-          },
-          data: {
-            status: HoldStatus.RELEASED,
-          },
-        });
-
-        // Step F: Create or update hold records for all requested seats
-        const holdRecords = [];
-        for (const seatId of seatIds) {
-          // Release any existing hold for this seat by this user first
+          // Step A: Expire stale holds in real-time
           await tx.seatHold.updateMany({
-            where: { showId, seatId, userId, status: HoldStatus.ACTIVE },
-            data: { status: HoldStatus.RELEASED },
-          });
-
-          const hold = await tx.seatHold.create({
-            data: {
+            where: {
               showId,
-              seatId,
-              userId,
-              sessionToken,
+              seatId: { in: seatIds },
               status: HoldStatus.ACTIVE,
-              expiresAt,
+              expiresAt: { lte: now },
+            },
+            data: {
+              status: HoldStatus.EXPIRED,
             },
           });
-          holdRecords.push(hold);
+
+          // Step B: Check if any requested seat is already CONFIRMED booked
+          const confirmedBooking = await tx.bookingSeat.findFirst({
+            where: {
+              showId,
+              seatId: { in: seatIds },
+              booking: { status: "CONFIRMED" },
+            },
+            include: { seat: true },
+          });
+
+          if (confirmedBooking) {
+            throw new ConflictError(
+              `Seat Row ${confirmedBooking.seat.row} Number ${confirmedBooking.seat.number} is already booked.`,
+              { conflictingSeatId: confirmedBooking.seatId }
+            );
+          }
+
+          // Step C: Check if any seat is currently HELD by a different user with active TTL
+          const activeHoldConflict = await tx.seatHold.findFirst({
+            where: {
+              showId,
+              seatId: { in: seatIds },
+              status: HoldStatus.ACTIVE,
+              expiresAt: { gt: now },
+              userId: { not: userId },
+            },
+            include: { seat: true },
+          });
+
+          if (activeHoldConflict) {
+            throw new ConflictError(
+              `Seat Row ${activeHoldConflict.seat.row} Number ${activeHoldConflict.seat.number} is currently held by another user.`,
+              {
+                conflictingSeatId: activeHoldConflict.seatId,
+                heldUntil: activeHoldConflict.expiresAt.toISOString(),
+              }
+            );
+          }
+
+          // Step D: Calculate new expiration timestamp (10 minutes lease)
+          const expiresAt = new Date(now.getTime() + SEAT_HOLD_DURATION_MINUTES * 60 * 1000);
+
+          // Step E: Release previous active holds by this user for other seats in this show
+          await tx.seatHold.updateMany({
+            where: {
+              showId,
+              userId,
+              status: HoldStatus.ACTIVE,
+              seatId: { notIn: seatIds },
+            },
+            data: {
+              status: HoldStatus.RELEASED,
+            },
+          });
+
+          // Step F: Create or update hold records for all requested seats
+          const holdRecords = [];
+          for (const seatId of seatIds) {
+            // Release any existing hold for this seat by this user first
+            await tx.seatHold.updateMany({
+              where: { showId, seatId, userId, status: HoldStatus.ACTIVE },
+              data: { status: HoldStatus.RELEASED },
+            });
+
+            const hold = await tx.seatHold.create({
+              data: {
+                showId,
+                seatId,
+                userId,
+                sessionToken,
+                status: HoldStatus.ACTIVE,
+                expiresAt,
+              },
+            });
+            holdRecords.push(hold);
+          }
+
+          // Log audit event
+          await AuditService.log({
+            userId,
+            action: "SEATS_HELD",
+            entityType: "Show",
+            entityId: showId,
+            metadata: { seatIds, expiresAt: expiresAt.toISOString() },
+          });
+
+          return {
+            holdId: holdRecords[0].id,
+            showId,
+            seatIds,
+            expiresAt: expiresAt.toISOString(),
+            remainingSeconds: SEAT_HOLD_DURATION_MINUTES * 60,
+          };
+        },
+        {
+          maxWait: 10000,
+          timeout: 20000,
         }
-
-        // Log audit event
-        await AuditService.log({
-          userId,
-          action: "SEATS_HELD",
-          entityType: "Show",
-          entityId: showId,
-          metadata: { seatIds, expiresAt: expiresAt.toISOString() },
-        });
-
-        return {
-          holdId: holdRecords[0].id,
-          showId,
-          seatIds,
-          expiresAt: expiresAt.toISOString(),
-          remainingSeconds: SEAT_HOLD_DURATION_MINUTES * 60,
-        };
-      },
-      {
-        isolationLevel: "Serializable",
-        maxWait: 5000,
-        timeout: 10000,
+      );
+    } catch (err: any) {
+      if (err instanceof ConflictError) {
+        throw err;
       }
-    );
+      if (
+        err instanceof Prisma.PrismaClientKnownRequestError &&
+        (err.code === "P2034" || err.code === "P2002")
+      ) {
+        throw new ConflictError(
+          "One or more requested seats are currently being locked by a concurrent reservation request. Please try again in a few moments."
+        );
+      }
+      if (err.message && (err.message.includes("could not serialize access") || err.message.includes("conflict"))) {
+        throw new ConflictError(
+          "Concurrent reservation conflict detected. Seat is already reserved by another user."
+        );
+      }
+      throw err;
+    }
   }
 
   /**

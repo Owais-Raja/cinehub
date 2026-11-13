@@ -39,3 +39,4 @@ export type HoldSeatsInput = z.infer<typeof HoldSeatsSchema>;
 export type CreateBookingInput = z.infer<typeof CreateBookingSchema>;
 export type ProcessPaymentInput = z.infer<typeof ProcessPaymentSchema>;
 export type ValidateTicketInput = z.infer<typeof ValidateTicketSchema>;
+

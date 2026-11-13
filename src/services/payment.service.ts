@@ -158,21 +158,7 @@ export class PaymentService {
           data: { status: BookingStatus.CONFIRMED },
         });
 
-        // Step C: Insert BookingSeat rows (with UNIQUE constraint on showId + seatId)
-        for (const hold of activeHolds) {
-          const seatPrice = pricingMap[hold.seat.category] || basePrice;
-          await tx.bookingSeat.create({
-            data: {
-              bookingId,
-              showId: booking.showId,
-              seatId: hold.seatId,
-              price: seatPrice,
-              category: hold.seat.category,
-            },
-          });
-        }
-
-        // Step D: Convert holds to CONVERTED
+        // Step C: Convert active holds to CONVERTED
         await tx.seatHold.updateMany({
           where: {
             showId: booking.showId,
@@ -214,10 +200,10 @@ export class PaymentService {
         };
       },
       {
-        isolationLevel: "Serializable",
-        maxWait: 5000,
-        timeout: 10000,
+        maxWait: 10000,
+        timeout: 20000,
       }
     );
   }
 }
+

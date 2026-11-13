@@ -90,3 +90,4 @@ Before recording your screen and microphone:
   - Show the real-time Occupancy overview table with booked seats, screen capacities, and percentages.
   - Show terminal with `npm run test` showing all passing tests.
   - Conclude.
+

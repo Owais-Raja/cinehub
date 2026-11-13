@@ -97,3 +97,4 @@ All five mandatory acceptance tests are verified:
 - **AT-3 (Hold Expiry vs Confirmed Retention):** Verified in `tests/integration/hold-expiry.test.ts`.
 - **AT-4 (Single-Use Gate Validation):** Verified in `tests/integration/ticket-validation.test.ts`.
 - **AT-5 (Admin Occupancy & Sales Report):** Verified in `tests/integration/occupancy-report.test.ts`.
+

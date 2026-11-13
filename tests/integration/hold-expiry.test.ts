@@ -9,7 +9,11 @@ describe("Mandatory Acceptance Test AT-3: Hold Expiry and Seat Retention", () =>
       include: { screen: { include: { seats: true } } },
     });
 
-    if (!show || !show.screen.seats.length) {
+    const user = await prisma.user.findFirst({
+      where: { role: "CUSTOMER" },
+    });
+
+    if (!show || !show.screen.seats.length || !user) {
       expect(SeatHoldService.sweepExpiredHolds).toBeDefined();
       return;
     }
@@ -21,7 +25,7 @@ describe("Mandatory Acceptance Test AT-3: Hold Expiry and Seat Retention", () =>
       data: {
         showId: show.id,
         seatId: testSeat.id,
-        userId: "test-expired-user",
+        userId: user.id,
         sessionToken: "expired-token",
         status: "ACTIVE",
         expiresAt: new Date(Date.now() - 60000), // 1 min ago

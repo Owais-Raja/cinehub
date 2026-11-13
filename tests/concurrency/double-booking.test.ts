@@ -10,14 +10,28 @@ describe("Mandatory Acceptance Test AT-2: Concurrency & Double-Booking Preventio
       include: { screen: { include: { seats: true } } },
     });
 
-    if (!show || !show.screen.seats.length) {
+    const customers = await prisma.user.findMany({
+      where: { role: "CUSTOMER" },
+      take: 2,
+    });
+
+    if (!show || !show.screen.seats.length || customers.length < 2) {
       expect(SeatHoldService.holdSeats).toBeDefined();
       return;
     }
 
-    const targetSeat = show.screen.seats[0];
-    const userA = "user-concurrency-a";
-    const userB = "user-concurrency-b";
+    // Pick an available seat and ensure it is clean
+    const targetSeat = show.screen.seats[10];
+
+    await prisma.seatHold.deleteMany({
+      where: { showId: show.id, seatId: targetSeat.id },
+    });
+    await prisma.bookingSeat.deleteMany({
+      where: { showId: show.id, seatId: targetSeat.id },
+    });
+
+    const userA = customers[0].id;
+    const userB = customers[1].id;
 
     // Launch parallel asynchronous hold requests targeting the same seat for the same show
     const [resultA, resultB] = await Promise.allSettled([
@@ -35,7 +49,7 @@ describe("Mandatory Acceptance Test AT-2: Concurrency & Double-Booking Preventio
       }),
     ]);
 
-    // Exactly one should succeed, and the other must be rejected with ConflictError (409)
+    // Exactly one must succeed (first to commit), and the second must be rejected (AT-2 requirement)
     const successCount = [resultA, resultB].filter((r) => r.status === "fulfilled").length;
     const rejectedCount = [resultA, resultB].filter((r) => r.status === "rejected").length;
 

@@ -39,3 +39,4 @@ export function formatDuration(mins: number): string {
   const m = mins % 60;
   return `${h}h ${m}m`;
 }
+

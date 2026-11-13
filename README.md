@@ -160,3 +160,4 @@ Interactive OpenAPI 3.0 specification is available at:
 1. **Payment Simulation:** In compliance with Section 1 of the assignment brief, financial payments are simulated (UPI, Cards, NetBanking) with idempotency keys. No real bank accounts or cards are charged.
 2. **Cancellation Deadline:** In accordance with standard Indian cinema ticketing practices, self-service cancellations with simulated refunds are permitted up to 2 hours (120 minutes) prior to show commencement. Within 2 hours, tickets are non-cancellable.
 3. **Seat Hold Duration:** Temporary seat holds are set to 10 minutes (`600 seconds`) before expiring and returning to available inventory.
+

@@ -43,3 +43,4 @@ export const INDIAN_CITIES = [
   { name: "Pune", state: "Maharashtra", slug: "pune" },
   { name: "Chandigarh", state: "Punjab", slug: "chandigarh" },
 ];
+

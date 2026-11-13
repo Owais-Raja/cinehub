@@ -58,3 +58,4 @@ export const config = {
     "/booking/:path*/payment",
   ],
 };
+

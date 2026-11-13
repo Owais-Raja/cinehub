@@ -36,3 +36,4 @@ describe("Mandatory Acceptance Test AT-4: Single-Use Ticket Validation", () => {
     ).rejects.toThrow(ConflictError);
   });
 });
+

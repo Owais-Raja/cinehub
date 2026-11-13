@@ -29,3 +29,4 @@ describe("Mandatory Acceptance Test AT-5: Dynamic Occupancy & Revenue Reporting"
     expect(sales.netRevenue).toBe(sales.grossRevenue - sales.totalRefunds);
   });
 });
+
