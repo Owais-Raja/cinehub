@@ -152,18 +152,30 @@ export default async function MoviesPage({
           ))}
         </div>
       ) : (
-        <div className="text-center py-16 bg-[#212836] rounded-2xl border border-[#2D3748]">
+        <div className="text-center py-16 bg-[#212836] rounded-2xl border border-[#2D3748] p-6">
           <Film className="w-12 h-12 text-[#8E9AA8] mx-auto mb-3 opacity-40" />
-          <h3 className="text-base font-semibold text-white">No Movies Match Your Criteria</h3>
-          <p className="text-xs text-[#8E9AA8] mt-1 mb-4">
-            Try resetting your genre and language filters.
+          <h3 className="text-base font-bold text-white">
+            {status === "COMING_SOON" ? "No Upcoming Releases Yet" : "No Movies In Theaters"}
+          </h3>
+          <p className="text-xs text-[#8E9AA8] mt-1 mb-4 max-w-sm mx-auto">
+            {status === "COMING_SOON"
+              ? "All upcoming movies have been cleared. Admin can upload upcoming titles anytime."
+              : "All previous movies have been cleared. Log in as Admin to upload thumbnails and publish new releases."}
           </p>
-          <Link
-            href="/movies"
-            className="px-4 py-2 rounded-xl bg-[#E83B50] text-white text-xs font-semibold"
-          >
-            Reset Filters
-          </Link>
+          <div className="flex items-center justify-center gap-3">
+            <Link
+              href="/admin/movies"
+              className="px-4 py-2 rounded-xl bg-[#E83B50] hover:bg-[#D32F43] text-white text-xs font-bold shadow-lg shadow-[#E83B50]/20"
+            >
+              Admin: Upload Movie
+            </Link>
+            <Link
+              href="/movies"
+              className="px-4 py-2 rounded-xl bg-[#242B3A] hover:bg-[#2D3748] text-[#8E9AA8] hover:text-white text-xs font-semibold border border-[#2D3748]"
+            >
+              Reset Filters
+            </Link>
+          </div>
         </div>
       )}
     </div>

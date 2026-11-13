@@ -39,50 +39,62 @@ export default async function AdminMoviesPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-[#2D3748]/50">
-              {movies.map((movie) => (
-                <tr key={movie.id} className="hover:bg-[#1E2430]/50 transition-colors">
-                  <td className="py-3 px-4">
-                    <div className="flex items-center gap-3">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={movie.posterUrl}
-                        alt={movie.title}
-                        className="w-8 h-12 object-cover rounded bg-[#171923]"
-                      />
-                      <div>
-                        <h4 className="font-bold text-white text-sm">{movie.title}</h4>
-                        <span className="text-[10px] text-[#8E9AA8] font-mono">{movie.slug}</span>
+              {movies.length > 0 ? (
+                movies.map((movie) => (
+                  <tr key={movie.id} className="hover:bg-[#1E2430]/50 transition-colors">
+                    <td className="py-3 px-4">
+                      <div className="flex items-center gap-3">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={movie.posterUrl}
+                          alt={movie.title}
+                          className="w-8 h-12 object-cover rounded bg-[#171923]"
+                        />
+                        <div>
+                          <h4 className="font-bold text-white text-sm">{movie.title}</h4>
+                          <span className="text-[10px] text-[#8E9AA8] font-mono">{movie.slug}</span>
+                        </div>
                       </div>
-                    </div>
-                  </td>
-                  <td className="py-3 px-4">
-                    <span className="px-2 py-0.5 rounded bg-black/60 text-[#E8B86D] font-bold">
-                      {movie.certification}
-                    </span>
-                  </td>
-                  <td className="py-3 px-4 text-white">{formatDuration(movie.durationMins)}</td>
-                  <td className="py-3 px-4 text-[#8E9AA8]">{movie.genres.join(", ")}</td>
-                  <td className="py-3 px-4">
-                    <span
-                      className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
-                        movie.status === "NOW_SHOWING"
-                          ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30"
-                          : "bg-[#E8B86D]/15 text-[#E8B86D] border-[#E8B86D]/30"
-                      }`}
-                    >
-                      {movie.status === "NOW_SHOWING" ? "In Theaters" : "Coming Soon"}
-                    </span>
-                  </td>
-                  <td className="py-3 px-4 text-right">
-                    <MovieRowActions
-                      movieId={movie.id}
-                      movieSlug={movie.slug}
-                      movieTitle={movie.title}
-                      currentStatus={movie.status}
-                    />
+                    </td>
+                    <td className="py-3 px-4">
+                      <span className="px-2 py-0.5 rounded bg-black/60 text-[#E8B86D] font-bold">
+                        {movie.certification}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 text-white">{formatDuration(movie.durationMins)}</td>
+                    <td className="py-3 px-4 text-[#8E9AA8]">{movie.genres.join(", ")}</td>
+                    <td className="py-3 px-4">
+                      <span
+                        className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                          movie.status === "NOW_SHOWING"
+                            ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30"
+                            : "bg-[#E8B86D]/15 text-[#E8B86D] border-[#E8B86D]/30"
+                        }`}
+                      >
+                        {movie.status === "NOW_SHOWING" ? "In Theaters" : "Coming Soon"}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 text-right">
+                      <MovieRowActions
+                        movieId={movie.id}
+                        movieSlug={movie.slug}
+                        movieTitle={movie.title}
+                        currentStatus={movie.status}
+                      />
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={6} className="py-12 text-center text-[#8E9AA8]">
+                    <Film className="w-10 h-10 text-[#8E9AA8] mx-auto mb-2 opacity-30" />
+                    <p className="text-sm font-semibold text-white">Movie Catalog Cleared</p>
+                    <p className="text-xs text-[#8E9AA8] mt-1 max-w-sm mx-auto">
+                      All previous movies have been removed. Click &quot;Add New Movie&quot; above to upload a movie thumbnail, title, and synopsis.
+                    </p>
                   </td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>

@@ -165,12 +165,63 @@ export class MovieService {
       },
     });
 
+    // If movie is In Theaters, automatically schedule showtimes across available screens
+    if (status === "NOW_SHOWING") {
+      try {
+        const screens = await prisma.screen.findMany({
+          take: 3,
+          include: { theatre: true },
+        });
+        const lang = await prisma.language.findFirst();
+        const format = await prisma.format.findFirst();
+
+        if (screens.length > 0 && lang && format) {
+          const today = new Date();
+          const showTimes = [
+            new Date(today.getTime() + 3 * 3600 * 1000),
+            new Date(today.getTime() + 7 * 3600 * 1000),
+            new Date(today.getTime() + 27 * 3600 * 1000),
+          ];
+
+          for (let i = 0; i < screens.length; i++) {
+            const screen = screens[i];
+            const st = showTimes[i % showTimes.length];
+            const et = new Date(st.getTime() + (durationMins + 20) * 60000);
+
+            const show = await prisma.show.create({
+              data: {
+                movieId: movie.id,
+                screenId: screen.id,
+                languageId: lang.id,
+                formatId: format.id,
+                startTime: st,
+                endTime: et,
+                basePrice: 300.0,
+                status: "SCHEDULED",
+              },
+            });
+
+            await prisma.showSeatPrice.createMany({
+              data: [
+                { showId: show.id, category: "SILVER", price: 300.0 },
+                { showId: show.id, category: "GOLD", price: 400.0 },
+                { showId: show.id, category: "PLATINUM", price: 550.0 },
+                { showId: show.id, category: "RECLINER", price: 800.0 },
+              ],
+            });
+          }
+        }
+      } catch (err) {
+        console.error("Auto-provision showtimes notice:", err);
+      }
+    }
+
     await AuditService.log({
       userId: adminUserId,
       action: "MOVIE_CREATED",
       entityType: "Movie",
       entityId: movie.id,
-      metadata: { title, slug },
+      metadata: { title, slug: finalSlug },
     });
 
     return movie;
