@@ -13,7 +13,7 @@ describe("Mandatory Acceptance Test AT-1: End-to-End Seat Hold & Booking Flow", 
     });
 
     const customer = await prisma.user.findFirst({
-      where: { email: "rajesh@example.com" },
+      where: { email: "ash@example.com" },
     });
 
     expect(show).toBeDefined();

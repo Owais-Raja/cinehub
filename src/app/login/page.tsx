@@ -137,12 +137,12 @@ function LoginForm() {
 
           <button
             type="button"
-            onClick={() => handleQuickFill("rajesh@example.com", "Customer@1234")}
+            onClick={() => handleQuickFill("ash@example.com", "Customer@1234")}
             className="p-2 rounded-xl bg-[#1E2430] hover:bg-[#242B3A] border border-[#2D3748] text-center transition-colors"
           >
             <Film className="w-4 h-4 text-[#E83B50] mx-auto mb-1" />
             <span className="text-[10px] font-bold text-white block">Customer</span>
-            <span className="text-[9px] text-[#8E9AA8] block">Booking</span>
+            <span className="text-[9px] text-[#8E9AA8] block">Ash</span>
           </button>
         </div>
       </div>

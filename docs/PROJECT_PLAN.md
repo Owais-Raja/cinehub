@@ -260,7 +260,7 @@ For reviewer evaluation and automated testing, the database will be seeded with 
 |---|---|---|---|
 | **Administrator** | `admin@cinehub.in` | `Admin@1234` | Full access to `/admin` dashboard, movie/theatre/screen/show CRUD, reports, audit logs. |
 | **Cinema Staff** | `staff@cinehub.in` | `Staff@1234` | Access to `/staff` ticket scanner, verification logs, and screen status. |
-| **Customer 1** | `rajesh@example.com` | `Customer@1234` | Standard customer account with active bookings and history. |
+| **Customer 1** | `ash@example.com` | `Customer@1234` | Standard customer account (Ash) with active bookings and history. |
 | **Customer 2** | `priya@example.com` | `Customer@1234` | Secondary customer account used for concurrency conflict demonstration. |
 
 ---

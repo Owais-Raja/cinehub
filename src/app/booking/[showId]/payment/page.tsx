@@ -24,7 +24,7 @@ function PaymentContent({ showId }: { showId: string }) {
   // Form State
   const [paymentMethod, setPaymentMethod] = useState<"UPI" | "CARD" | "NETBANKING">("UPI");
   const [simulateOutcome, setSimulateOutcome] = useState<"SUCCESS" | "FAILED">("SUCCESS");
-  const [upiId, setUpiId] = useState("rajesh@okhdfcbank");
+  const [upiId, setUpiId] = useState("ash@okhdfcbank");
   const [isProcessing, setIsProcessing] = useState(false);
 
   // Client idempotency key generated once per checkout session

@@ -5,7 +5,7 @@ import { HoldSeatsSchema, ProcessPaymentSchema } from "@/schemas/booking.schema"
 describe("Validation Schemas & Negative Edge Cases", () => {
   it("should reject registration with invalid email", () => {
     const result = RegisterSchema.safeParse({
-      fullName: "Rajesh Kumar",
+      fullName: "Ash",
       email: "invalid-email-format",
       password: "Password@123",
     });
@@ -14,8 +14,8 @@ describe("Validation Schemas & Negative Edge Cases", () => {
 
   it("should reject weak password missing uppercase or numbers", () => {
     const result = RegisterSchema.safeParse({
-      fullName: "Rajesh Kumar",
-      email: "rajesh@example.com",
+      fullName: "Ash",
+      email: "ash@example.com",
       password: "weakpassword",
     });
     expect(result.success).toBe(false);

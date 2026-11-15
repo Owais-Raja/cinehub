@@ -94,7 +94,7 @@ The database includes pre-configured demo accounts for all roles:
 |---|---|---|---|
 | **Administrator** | `admin@cinehub.in` | `Admin@1234` | Full access to `/admin` dashboard, catalog management, reports, audit logs. |
 | **Cinema Staff** | `staff@cinehub.in` | `Staff@1234` | Access to `/staff/scanner` for gate ticket validation and duplicate check. |
-| **Customer 1** | `rajesh@example.com` | `Customer@1234` | Standard customer account with active bookings and history. |
+| **Customer 1** | `ash@example.com` | `Customer@1234` | Standard customer account (Ash) with active bookings and history. |
 | **Customer 2** | `priya@example.com` | `Customer@1234` | Customer account for testing concurrent double-booking conflicts. |
 
 > **Evaluator Tip:** The `/login` page features **One-Click Demo Account Quick-Fill** buttons for immediate testing!
